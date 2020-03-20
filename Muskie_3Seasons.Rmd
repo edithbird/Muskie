@@ -1,0 +1,114 @@
+---
+title: "Marketing Report"
+subtitle: "Office of Marketing and Brand Management"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+
+library(knitr)
+library(janitor)
+library(tidyr)
+library(zoo)
+library(lubridate)
+library(hms)
+library(dplyr)
+library(ggplot2)
+library(gtable)
+library(gridExtra)
+library(grid)
+library(ggpubr)
+library(kableExtra)
+library(scales)
+library(hms)
+library(stringr)
+library(tinytex)
+
+# invalidate cache when the tufte version changes
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE,
+	cache.extra = packageVersion("tufte"),
+	tidy = FALSE
+	
+)
+
+```
+
+
+```{r}
+options(tinytex.verbose = TRUE)
+```
+
+# Findings
+
+## LinkedIn
+
+```{r}
+Muskie <- read.csv("C:/Users/christine.iyer/Box/Agency Work Active Projects/Muskie/Data.csv", header = T, stringsAsFactors = F)
+```
+
+```{r fig.height=4, fig.width=8}
+
+a <- dplyr::filter(Muskie, grepl('LI_WI', RunTime)) %>% dplyr::select(RunTime:POL)
+d <- dplyr::filter(Muskie, grepl('LI_SP', RunTime)) %>% dplyr::select(RunTime:POL)
+e <- dplyr::filter(Muskie, grepl('LI_FA', RunTime)) %>% dplyr::select(RunTime:POL)
+f <- cbind.data.frame(a,d,e)
+
+g <- f[, c(2:4, 7:8, 11:12 )]
+kable(g, "latex", booktabs = T) %>% 
+  kable_styling(full_width = T)%>%
+  add_header_above(c(" " = 1, "LinkedIn Winter 2020 for FA20" = 2, "LinkedIn Spring 2019 for FA19" = 2, "LinkedIn Fall 2018 for FA19" = 2))
+```
+
+## Programmatic
+
+```{r fig.height=4, fig.width=8}
+
+a <- dplyr::filter(Muskie, grepl('DBM_WI', RunTime)) %>% dplyr::select(RunTime:POL)
+d <- dplyr::filter(Muskie, grepl('DBM_SP', RunTime)) %>% dplyr::select(RunTime:POL)
+e <- dplyr::filter(Muskie, grepl('DBM_FA', RunTime)) %>% dplyr::select(RunTime:POL)
+f <- cbind.data.frame(a,d,e)
+
+g <- f[, c(2:4, 7:8, 11:12 )]
+kable(g, "latex", booktabs = T) %>% 
+  kable_styling(full_width = T)%>%
+  add_header_above(c(" " = 1, "Programmatic Winter 2020 for FA20" = 2, "Programmatic Spring 2019 for FA19" = 2, "Programmatic Fall 2019 for FA19" = 2))
+```
+
+
+## Facebook
+
+```{r fig.height=4, fig.width=8}
+
+a <- dplyr::filter(Muskie, grepl('FB_WI', RunTime)) %>% dplyr::select(RunTime:POL)
+d <- dplyr::filter(Muskie, grepl('FB_SP', RunTime)) %>% dplyr::select(RunTime:POL)
+e <- dplyr::filter(Muskie, grepl('FB_FA', RunTime)) %>% dplyr::select(RunTime:POL)
+f <- cbind.data.frame(a,d,e)
+
+g <- f[, c(2:4, 7:8, 11:12 )]
+kable(g, "latex", booktabs = T) %>% 
+  kable_styling(full_width = T)%>%
+  add_header_above(c(" " = 1, "Facebook Winter 2020 for FA20" = 2, "Facebook Spring 2019 for FA18" = 2, "Facebook Fall 2019 for FA19" = 2))
+
+  
+```
+
+
+
+
+
+
+
+# Conclusion
+
+* We are pleased with LinkedIn and Doubleclick ad performance, the click-through-rates are above benchmark. Furthermore, both vendors have driven more traffic to the campaign landing page(s) with lower bounce rates than the last spring's campaign.
+
+* Facebook CTR dropped from last spring's campaign. Because last spring's CTR had dropped from that of the previous fall to a rate below the USM cutoff of 0.45%, we allocated less funds to this platform. Proportionally, unique pageviews to impressions didn't change, but the average time on page improved. 
+
+* Despite robust growth in ad driven web traffic, viewers did not complete the inquiry forms, though many clicked through to it. 
+
+

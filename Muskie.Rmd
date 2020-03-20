@@ -1,0 +1,678 @@
+---
+title: "FY20 Muskie Digital Campaign"
+author: "Office of Marketing and Brand Management"
+date: "2/4/2020"
+output: 
+    pdf_document :
+      latex_engine : xelatex
+---
+
+```{r, include=FALSE}
+options(tinytex.verbose = TRUE)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+
+
+
+```{r  fig.height=2.5, fig.width=8, message=FALSE, warning=FALSE}
+library(knitr)
+library(janitor)
+library(tidyr)
+library(zoo)
+library(lubridate)
+library(hms)
+library(dplyr)
+library(ggplot2)
+library(gtable)
+library(grid)
+library(ggpubr)
+library(kableExtra)
+library(scales)
+library(tinytex)
+```
+
+Description:
+
+The following report is a summary of the first 60 days of the Muskie School's digital display advertising campaign. It started running on November 27, 2019 and goes through the end of February. 
+
+The ads separately promote the MPH and the MPPM via 3 different platforms; Facebook (FB), Programmatic (DBM), and LinkedIn (LI). This report looks at performance data by program and vendor which is illustrated by plots and tables. Benchmarks for the Click-through-Rates (CTRs) are shown with a dotted black lines on the plots. The one record table below each series of plots summarizes the metrics by the latest week and the campaign to date. 
+
+
+```{r data 1}
+
+#FM <- read.csv("C:/Users/christine.iyer/Downloads/MKT_output.csv", header = T, stringsAsFactors = F)
+#FM <-  read.csv("file:///C:/Users/christine.iyer/Box/FM/MKT_output.csv", header = T, stringsAsFactors = F)
+FM <- read.csv("file:///Z:/DAA/Marketing/MKT_output.csv", header = T, stringsAsFactors = F)
+FM <- FM %>% filter(Master_Adname_Type == "NC")
+FM <- FM %>% select(1:8, 13, 15:19, 21:24, 26, 28:29, 31:39) %>% select(Master_Date, everything())
+#FM <- FM %>% mutate_at(9:30, ~replace(., is.na(.), 0)) %>% mutate(Master_Date = as.Date(Master_Date, format = "%m/%d/%Y")) %>% arrange(Master_Date)
+
+FM <- FM %>% mutate_at(10:30, ~replace(., is.na(.), 0)) %>% mutate(Master_Date = as.Date(Master_Date, format = "%Y-%m-%d")) %>% arrange(Master_Date) %>% filter(Master_Date > "2019-11-30")
+
+```
+
+
+```{r data 2, eval=FALSE, include=FALSE}
+FMW <- FM %>%
+  #mutate(Week = cut(Master_Date + 2, "week")
+  #                                     , with_year = FALSE, fiscal_start = 7
+  #                                      , Vendor_Medium = paste0(Code_Medium, "_", Code_Vendor)) %>%
+  group_by(Week = cut(Master_Date + 1, "week"), Code_Vendor, Code_Medium, Code_Product, Code_Audience) %>%
+  summarise(
+    Cost = sum(Master_Cost),
+    Clicks = sum(Master_Clicks),
+    Impressions = round(sum(Master_Impressions),0),
+    #CTR = paste0(round(Clicks/Impressions * 100, 2), "%"),
+    Bounces = sum(Master_Bounces),
+    Sessions = sum(Master_Sessions),
+    UPV = sum(Master_Unique_Pageviews),
+    Views = sum(Master_Views),
+    Completions = sum(Master_Completions),
+    #BounceRate = paste0(round(Bounces/Sessions * 100, 2), "%"),
+    Step1 = sum(Master_Time_On_Page)/(sum(Master_Pageviews)- sum(Master_Exits)),
+    Av_TOP = round_hms(as_hms(Step1), 5),
+    ClickRatePct = round(Clicks/Impressions * 100, 2),
+    BounceRatePct = round(Bounces/Sessions * 100, 2),
+    ViewRate = round(Views/Impressions * 100, 2),
+    VTR = round(Completions/Impressions *100, 2),
+    ClickableCompletions = sum(Master_Clickable_Completions),
+    ClickableCompRate = round(Clicks/ClickableCompletions * 100, 2), 
+    Swipes = sum(Master_Swipes), 
+    SwipeUpRatePct = round(Swipes/Impressions * 100, 2), 
+    Opens = sum(Master_Clicks_To_Site),
+    CTOR = round(Opens/Clicks * 100, 2), 
+    Sends = sum(Master_Sends), 
+    LIOpens = sum(Master_Opens), 
+    OpenRate = round(LIOpens/Sends * 100, 2)) 
+
+```
+
+```{r data 3}
+
+colorP <- c("#F6A704", "#0E1033","#4E7B14","#A92007","#D47E0A")
+ FMVM <- FM %>%
+   mutate(Product_Audience = paste0(Code_Product, "_", Code_Audience)) %>%
+   group_by(Code_Audience,Code_Product, Code_Vendor, Code_Medium,Week =cut(Master_Date + 1, "week")) %>%
+   summarise(
+     Cost = sum(Master_Cost),
+     Clicks = sum(Master_Clicks),
+     Impressions = round(sum(Master_Impressions),0),
+     #CTR = paste0(round(Clicks/Impressions * 100, 2), "%"),
+     Bounces = sum(Master_Bounces),
+     Sessions = sum(Master_Sessions),
+     UPV = sum(Master_Unique_Pageviews),
+     Views = sum(Master_Views),
+     Completions = sum(Master_Completions),
+     #BounceRate = paste0(round(Bounces/Sessions * 100, 2), "%"),
+     Step1 = sum(Master_Time_On_Page)/(sum(Master_Pageviews)- sum(Master_Exits)),
+     Av_TOP = round_hms(as_hms(Step1), 5),
+     ClickRatePct = round(Clicks/Impressions * 100, 2),
+     BounceRatePct = round(Bounces/Sessions * 100, 2),
+     ViewRate = round(Views/Impressions * 100, 2),
+     VTR = round(Completions/Impressions *100, 2),
+     ClickableCompletions = sum(Master_Clickable_Completions),
+     ClickableCompRate = round(Clicks/ClickableCompletions * 100, 2), 
+     Swipes = sum(Master_Swipes), 
+     SwipeUpRatePct = round(Swipes/Impressions * 100, 2),
+     Opens = sum(Master_Clicks_To_Site),
+     CTOR = round(Opens/Clicks * 100, 2), 
+     Sends = sum(Master_Sends), 
+     LIOpens = sum(Master_Opens),
+     LIClicks = sum(Master_Clicks_Sponsored_InMail),
+     OpenRate = round(LIOpens/Sends * 100, 2), 
+     Engagements = sum(as.numeric(Master_Engagements)),
+     EngagementRate = round(Engagements/Impressions * 100, 2),
+     EngRate = round((sum(LIOpens)+sum(Engagements))/sum(Sends)*100, 2),  
+     LICTOR = round(sum(LIClicks)/sum(LIOpens) * 100, 2)) %>%
+   select(Week, Impressions, Clicks, Bounces, Sessions, Swipes, ClickRatePct, SwipeUpRatePct, UPV, BounceRatePct, Av_TOP, ClickableCompRate, VTR, CTOR,OpenRate, Sends, ViewRate, ClickableCompletions, Completions, Opens, LIOpens, LIClicks, Engagements, LICTOR, EngRate, EngagementRate)
+
+```
+
+```{r}
+paste0("Note: Data updated ", Sys.Date())
+```
+
+## MPH
+
+### Facebook Display   {.tabset .tabset-fade .tabset-pills}
+
+
+```{r  fig.height=2.5, fig.width=8, message=FALSE, warning=FALSE}
+IGD <- FMVM %>% 
+  filter(Code_Vendor == "FB" & Code_Medium == "DISP" & Code_Product == "MPH") %>%
+  mutate(Week = as.Date(Week))
+
+YTD <- IGD %>% 
+        mutate(ReportingPeriod = "YTD") %>% 
+        group_by(Code_Audience, ReportingPeriod) %>%
+        summarise(YTD_Imp = round(sum(Impressions),0),
+                  Avg_CTR = paste0(round(sum(Clicks)/sum(Impressions) * 100, 2), "%"),
+                  YTD_UPV = round(sum(UPV),0), 
+                  Avg_BR = paste0(round(sum(Bounces)/sum(Sessions) * 100, 2), "%"))
+
+
+thisWk <- IGD %>% 
+  filter(Impressions >= 1000) %>% 
+  filter(Week == max(Week)) %>% 
+  mutate(Week = as.character(Week)) %>% 
+  group_by(Code_Audience, Week) %>% 
+  summarise(Impressions = round(sum(Impressions),0),
+            CTR = paste0(round(sum(Clicks)/sum(Impressions) * 100, 2), "%"),
+            UPV = round(sum(UPV),0), 
+            BR = paste0(round(sum(Bounces)/sum(Sessions) * 100, 2), "%"))
+
+abcde <- merge.data.frame(thisWk,YTD,  by = "Code_Audience")
+abcde <- abcde %>% select(Impressions, CTR, UPV, BR, YTD_Imp, Avg_CTR, YTD_UPV, Avg_BR )
+
+
+
+PGCTR <- IGD %>%  
+  ggplot(aes(x = Week, y = ClickRatePct , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank()) +
+  geom_hline(yintercept = c(0.45,0.73), linetype="dashed")
+
+PGImp <- IGD %>% 
+  ggplot(aes(x = Week, y = Impressions , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.title.x=element_blank(),
+        axis.ticks.x=element_blank()) 
+
+
+PGUPV <- IGD %>% 
+  ggplot(aes(x = Week, y = UPV , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank())
+
+
+
+PGBR <- IGD %>% 
+  ggplot(aes(x = Week, y = BounceRatePct , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank())
+
+a <- ggarrange(PGImp, PGCTR, PGUPV, PGBR, ncol=4, nrow=1, common.legend = TRUE, legend="right")
+annotate_figure(a, text_grob(paste0( IGD$Code_Vendor, "_ ", IGD$Code_Medium, "_ ", IGD$Code_Product), color = "darkblue", face = "plain", size = 18, just = "right"))
+
+kable(abcde) %>%
+  kable_styling("striped", full_width = T) %>%
+  add_header_above(c("This Week" = 4, "Since Inception" = 4))
+
+
+```
+
+### Programmatic Display Display   {.tabset .tabset-fade .tabset-pills}
+
+
+```{r  fig.height=2.5, fig.width=8, message=FALSE, warning=FALSE}
+IGD <- FMVM %>% 
+  filter(Code_Vendor == "DBM" & Code_Medium == "DISP" & Code_Product == "MPH") %>%
+  mutate(Week = as.Date(Week))
+
+YTD <- IGD %>% 
+        mutate(ReportingPeriod = "YTD") %>% 
+        group_by(Code_Audience, ReportingPeriod) %>%
+        summarise(YTD_Imp = round(sum(Impressions),0),
+                  Avg_CTR = paste0(round(sum(Clicks)/sum(Impressions) * 100, 2), "%"),
+                  YTD_UPV = round(sum(UPV),0), 
+                  Avg_BR = paste0(round(sum(Bounces)/sum(Sessions) * 100, 2), "%"))
+
+
+thisWk <- IGD %>% 
+  filter(Impressions >= 1000) %>% 
+  filter(Week == max(Week)) %>% 
+  mutate(Week = as.character(Week)) %>% 
+  group_by(Code_Audience, Week) %>% 
+  summarise(Impressions = round(sum(Impressions),0),
+            CTR = paste0(round(sum(Clicks)/sum(Impressions) * 100, 2), "%"),
+            UPV = round(sum(UPV),0), 
+            BR = paste0(round(sum(Bounces)/sum(Sessions) * 100, 2), "%"))
+
+abcde <- merge.data.frame(thisWk,YTD,  by = "Code_Audience")
+abcde <- abcde %>% select(Impressions, CTR, UPV, BR, YTD_Imp, Avg_CTR, YTD_UPV, Avg_BR )
+
+
+
+PGCTR <- IGD %>%  
+  ggplot(aes(x = Week, y = ClickRatePct , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank()) +
+  geom_hline(yintercept = 0.07, linetype="dashed")
+
+PGImp <- IGD %>% 
+  ggplot(aes(x = Week, y = Impressions , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.title.x=element_blank(),
+        axis.ticks.x=element_blank()) 
+
+
+PGUPV <- IGD %>% 
+  ggplot(aes(x = Week, y = UPV , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank())
+
+
+
+PGBR <- IGD %>% 
+  ggplot(aes(x = Week, y = BounceRatePct , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank())
+
+a <- ggarrange(PGImp, PGCTR, PGUPV, PGBR, ncol=4, nrow=1, common.legend = TRUE, legend="right")
+annotate_figure(a, text_grob(paste0( IGD$Code_Vendor, "_ ", IGD$Code_Medium, "_ ", IGD$Code_Product), color = "darkblue", face = "plain", size = 18, just = "right"))
+
+kable(abcde) %>%
+  kable_styling("striped", full_width = T) %>%
+  add_header_above(c("This Week" = 4, "Since Inception" = 4))
+
+```
+
+### LinkedIn Sponsored Content  {.tabset .tabset-fade .tabset-pills}
+
+
+```{r  fig.height=2.5, fig.width=8, message=FALSE, warning=FALSE}
+
+IGD <- FMVM %>% 
+  filter(Code_Vendor == "LI" &  Code_Product == "MPH") %>%
+  mutate(Week = as.Date(Week))
+YTD <- IGD %>% 
+        mutate(ReportingPeriod = "YTD") %>% 
+        group_by(Code_Audience, ReportingPeriod) %>%
+        summarise(YTD_Imp = round(sum(Impressions),0),
+                  Avg_CTR = paste0(round(sum(Clicks)/sum(Impressions) * 100, 2), "%"),
+                  YTD_UPV = round(sum(UPV),0), 
+                  Avg_BR = paste0(round(sum(Bounces)/sum(Sessions) * 100, 2), "%"))
+
+
+thisWk <- IGD %>% 
+  filter(Impressions >= 1000) %>% 
+  filter(Week == max(Week)) %>% 
+  mutate(Week = as.character(Week)) %>% 
+  group_by(Code_Audience, Week) %>% 
+  summarise(Impressions = round(sum(Impressions),0),
+            CTR = paste0(round(sum(Clicks)/sum(Impressions) * 100, 2), "%"),
+            UPV = round(sum(UPV),0), 
+            BR = paste0(round(sum(Bounces)/sum(Sessions) * 100, 2), "%"))
+
+abcde <- merge.data.frame(thisWk,YTD,  by = "Code_Audience")
+abcde <- abcde %>% select(Impressions, CTR, UPV, BR, YTD_Imp, Avg_CTR, YTD_UPV, Avg_BR )
+
+
+
+
+PGCTR <- IGD %>%  
+  ggplot(aes(x = Week, y = ClickRatePct , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank()) +
+  geom_hline(yintercept = 0.15, linetype="dashed")
+
+PGImp <- IGD %>% 
+  ggplot(aes(x = Week, y = Impressions , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.title.x=element_blank(),
+        axis.ticks.x=element_blank()) 
+
+
+PGUPV <- IGD %>% 
+  ggplot(aes(x = Week, y = UPV , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank())
+
+
+
+PGBR <- IGD %>% 
+  ggplot(aes(x = Week, y = BounceRatePct , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank())
+
+a <- ggarrange(PGImp, PGCTR, PGUPV, PGBR, ncol=4, nrow=1, common.legend = TRUE, legend="right")
+annotate_figure(a, text_grob(paste0( IGD$Code_Vendor, "_ ", IGD$Code_Medium, "_ ", IGD$Code_Product), color = "darkblue", face = "plain", size = 18, just = "right"))
+
+kable(abcde) %>%
+  kable_styling("striped", full_width = T) %>%
+  add_header_above(c("This Week" = 4, "Since Inception" = 4))
+
+
+
+```
+
+## POL
+
+### Facebook Display   {.tabset .tabset-fade .tabset-pills}
+
+
+```{r  fig.height=2.5, fig.width=8, message=FALSE, warning=FALSE}
+IGD <- FMVM %>% 
+  filter(Code_Vendor == "FB" & Code_Medium == "DISP" & Code_Product == "POL") %>%
+  mutate(Week = as.Date(Week))
+
+YTD <- IGD %>% 
+        mutate(ReportingPeriod = "YTD") %>% 
+        group_by(Code_Audience, ReportingPeriod) %>%
+        summarise(YTD_Imp = round(sum(Impressions),0),
+                  Avg_CTR = paste0(round(sum(Clicks)/sum(Impressions) * 100, 2), "%"),
+                  YTD_UPV = round(sum(UPV),0), 
+                  Avg_BR = paste0(round(sum(Bounces)/sum(Sessions) * 100, 2), "%"))
+
+
+thisWk <- IGD %>% 
+  filter(Impressions >= 1000) %>% 
+  filter(Week == max(Week)) %>% 
+  mutate(Week = as.character(Week)) %>% 
+  group_by(Code_Audience, Week) %>% 
+  summarise(Impressions = round(sum(Impressions),0),
+            CTR = paste0(round(sum(Clicks)/sum(Impressions) * 100, 2), "%"),
+            UPV = round(sum(UPV),0), 
+            BR = paste0(round(sum(Bounces)/sum(Sessions) * 100, 2), "%"))
+
+abcde <- merge.data.frame(thisWk,YTD,  by = "Code_Audience")
+abcde <- abcde %>% select(Impressions, CTR, UPV, BR, YTD_Imp, Avg_CTR, YTD_UPV, Avg_BR )
+
+
+
+
+PGCTR <- IGD %>%  
+  ggplot(aes(x = Week, y = ClickRatePct , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank()) +
+  geom_hline(yintercept = c(0.45,0.73), linetype="dashed")
+
+PGImp <- IGD %>% 
+  ggplot(aes(x = Week, y = Impressions , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.title.x=element_blank(),
+        axis.ticks.x=element_blank()) 
+
+
+PGUPV <- IGD %>% 
+  ggplot(aes(x = Week, y = UPV , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank())
+
+
+
+PGBR <- IGD %>% 
+  ggplot(aes(x = Week, y = BounceRatePct , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank())
+
+a <- ggarrange(PGImp, PGCTR, PGUPV, PGBR, ncol=4, nrow=1, common.legend = TRUE, legend="right")
+annotate_figure(a, text_grob(paste0( IGD$Code_Vendor, "_ ", IGD$Code_Medium, "_ ", IGD$Code_Product), color = "darkblue", face = "plain", size = 18, just = "right"))
+
+kable(abcde) %>%
+  kable_styling("striped", full_width = T) %>%
+  add_header_above(c("This Week" = 4, "Since Inception" = 4))
+
+
+```
+
+### Programmatic Display Display   {.tabset .tabset-fade .tabset-pills}
+
+
+```{r  fig.height=2.5, fig.width=8, message=FALSE, warning=FALSE}
+IGD <- FMVM %>% 
+  filter(Code_Vendor == "DBM" & Code_Medium == "DISP" & Code_Product == "POL") %>%
+  mutate(Week = as.Date(Week))
+
+YTD <- IGD %>% 
+        mutate(ReportingPeriod = "YTD") %>% 
+        group_by(Code_Audience, ReportingPeriod) %>%
+        summarise(YTD_Imp = round(sum(Impressions),0),
+                  Avg_CTR = paste0(round(sum(Clicks)/sum(Impressions) * 100, 2), "%"),
+                  YTD_UPV = round(sum(UPV),0), 
+                  Avg_BR = paste0(round(sum(Bounces)/sum(Sessions) * 100, 2), "%"))
+
+
+thisWk <- IGD %>% 
+  filter(Impressions >= 1000) %>% 
+  filter(Week == max(Week)) %>% 
+  mutate(Week = as.character(Week)) %>% 
+  group_by(Code_Audience, Week) %>% 
+  summarise(Impressions = round(sum(Impressions),0),
+            CTR = paste0(round(sum(Clicks)/sum(Impressions) * 100, 2), "%"),
+            UPV = round(sum(UPV),0), 
+            BR = paste0(round(sum(Bounces)/sum(Sessions) * 100, 2), "%"))
+
+abcde <- merge.data.frame(thisWk,YTD,  by = "Code_Audience")
+abcde <- abcde %>% select(Impressions, CTR, UPV, BR, YTD_Imp, Avg_CTR, YTD_UPV, Avg_BR )
+
+
+
+
+PGCTR <- IGD %>%  
+  ggplot(aes(x = Week, y = ClickRatePct , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank()) +
+  geom_hline(yintercept = 0.07, linetype="dashed")
+
+PGImp <- IGD %>% 
+  ggplot(aes(x = Week, y = Impressions , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.title.x=element_blank(),
+        axis.ticks.x=element_blank()) 
+
+
+PGUPV <- IGD %>% 
+  ggplot(aes(x = Week, y = UPV , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank())
+
+
+
+PGBR <- IGD %>% 
+  ggplot(aes(x = Week, y = BounceRatePct , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank())
+
+a <- ggarrange(PGImp, PGCTR, PGUPV, PGBR, ncol=4, nrow=1, common.legend = TRUE, legend="right")
+annotate_figure(a, text_grob(paste0( IGD$Code_Vendor, "_ ", IGD$Code_Medium, "_ ", IGD$Code_Product), color = "darkblue", face = "plain", size = 18, just = "right"))
+
+kable(abcde) %>%
+  kable_styling("striped", full_width = T) %>%
+  add_header_above(c("This Week" = 4, "Since Inception" = 4))
+
+```
+
+### LinkedIn Sponsored Content  {.tabset .tabset-fade .tabset-pills}
+
+
+```{r  fig.height=2.5, fig.width=8, message=FALSE, warning=FALSE}
+
+IGD <- FMVM %>% 
+  filter(Code_Vendor == "LI" &  Code_Product == "POL") %>%
+  mutate(Week = as.Date(Week))
+YTD <- IGD %>% 
+        mutate(ReportingPeriod = "YTD") %>% 
+        group_by(Code_Audience, ReportingPeriod) %>%
+        summarise(YTD_Imp = round(sum(Impressions),0),
+                  Avg_CTR = paste0(round(sum(Clicks)/sum(Impressions) * 100, 2), "%"),
+                  YTD_UPV = round(sum(UPV),0), 
+                  Avg_BR = paste0(round(sum(Bounces)/sum(Sessions) * 100, 2), "%"))
+
+
+thisWk <- IGD %>% 
+  filter(Impressions >= 1000) %>% 
+  filter(Week == max(Week)) %>% 
+  mutate(Week = as.character(Week)) %>% 
+  group_by(Code_Audience, Week) %>% 
+  summarise(Impressions = round(sum(Impressions),0),
+            CTR = paste0(round(sum(Clicks)/sum(Impressions) * 100, 2), "%"),
+            UPV = round(sum(UPV),0), 
+            BR = paste0(round(sum(Bounces)/sum(Sessions) * 100, 2), "%"))
+
+abcde <- merge.data.frame(thisWk,YTD,  by = "Code_Audience")
+abcde <- abcde %>% select(Impressions, CTR, UPV, BR, YTD_Imp, Avg_CTR, YTD_UPV, Avg_BR )
+
+
+
+
+PGCTR <- IGD %>%  
+  ggplot(aes(x = Week, y = ClickRatePct , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank()) +
+  geom_hline(yintercept = 0.15, linetype="dashed")
+
+PGImp <- IGD %>% 
+  ggplot(aes(x = Week, y = Impressions , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.title.x=element_blank(),
+        axis.ticks.x=element_blank()) 
+
+
+PGUPV <- IGD %>% 
+  ggplot(aes(x = Week, y = UPV , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank())
+
+
+
+PGBR <- IGD %>% 
+  ggplot(aes(x = Week, y = BounceRatePct , color = Code_Audience)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = colorP) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.ticks.x=element_blank())
+
+a <- ggarrange(PGImp, PGCTR, PGUPV, PGBR, ncol=4, nrow=1, common.legend = TRUE, legend="right")
+annotate_figure(a, text_grob(paste0( IGD$Code_Vendor, "_ ", IGD$Code_Medium, "_ ", IGD$Code_Product), color = "darkblue", face = "plain", size = 18, just = "right"))
+
+kable(abcde) %>%
+  kable_styling("striped", full_width = T) %>%
+  add_header_above(c("This Week" = 4, "Since Inception" = 4))
+
+
+
+```
+
+```{r eval=FALSE, include=FALSE}
+Mus <- read.csv("C:/Users/christine.iyer/Box/Agency Work Active Projects/Muskie/WebData.csv", header = T, stringsAsFactors = F)
+Mus <- Mus %>% mutate(Ad.Content = ifelse(str_detect(Ad.Content, "_"), "Ad", "NotAd"), Source...Medium =  ifelse(str_detect(Ad.Content, "oogle"), "Google", "Other"))
+library(stringr)
+
+
+Mus<- Mus %>% 
+  group_by(Program, Source...Medium) %>% 
+  mutate(Time.on.Page = as_hms(Time.on.Page), Number = as.numeric(Time.on.Page)) %>% 
+  summarise(AvTOP = as_hms(mean(Time.on.Page), Total = sum(Number))) 
+ 
+# %>% mutate(AvTOP = round(as.numeric(AvTOP)))
+
+  
+  
+Mus
+```
+
+# Conclusions:
+
+* From an ad performance perspective, DBM and LI are doing well with CTRs above the USM and National benchmarks respectively. 
+
+* DBM and FB drive the most traffic and DBM has a very good bounce rate. 
